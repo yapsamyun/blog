@@ -87,9 +87,21 @@ async function loadContentFor(i){
 async function updateEntry(){
   if(!entriesMeta.length) return;
   const e = entriesMeta[idx];
-  entryTitle.textContent = e.date;
-  const md = await loadContentFor(idx);
-  entryContent.innerHTML = renderMarkdown(md);
+  const md = (await loadContentFor(idx)) || '';
+
+  // If the markdown begins with a top-level heading (e.g. "# 2026-06-12"),
+  // use it as the page title and strip it from the rendered content so
+  // the date/title doesn't appear twice on the page.
+  const titleMatch = md.match(/^\s*#\s+(.+)(?:\r?\n)*/);
+  if(titleMatch){
+    entryTitle.textContent = titleMatch[1].trim();
+    const mdWithoutTitle = md.replace(/^\s*#\s+(.+)(?:\r?\n)*/, '');
+    entryContent.innerHTML = renderMarkdown(mdWithoutTitle);
+  } else {
+    entryTitle.textContent = e.date;
+    entryContent.innerHTML = renderMarkdown(md);
+  }
+
   Array.from(entryList.children).forEach((li,i)=> li.classList.toggle('active', i===idx));
   const entryEl = document.querySelector('.entry');
   if(entryEl) entryEl.scrollTop = 0;
