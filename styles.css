@@ -1,0 +1,86 @@
+/* styles.css - Simple clean journal layout */
+:root{
+  --bg: #f7e3c1;
+  --panel: #fff7ef;
+  --accent: #6b4f3b;
+  --muted: #6b6b6b;
+}
+
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family: 'Gaegu', cursive, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  background:var(--bg);
+  color:var(--accent);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* Left hover area + sliding sidebar */
+.left-hover-area{
+  position:fixed;
+  left:0;top:0;bottom:0;
+  width:56px; /* small visible edge */
+  z-index:40;
+}
+
+.sidebar{
+  position:fixed;
+  left:0;top:0;bottom:0;
+  width:280px;
+  padding:20px 16px;
+  transform:translateX(-240px);
+  transition:transform .22s ease, opacity .22s ease;
+  background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));
+  box-shadow: 6px 0 18px rgba(0,0,0,0.06);
+  border-right:1px solid rgba(0,0,0,0.04);
+  overflow:auto;
+}
+
+.left-hover-area:hover .sidebar,
+.sidebar:focus-within{
+  transform:none;
+}
+
+.sidebar h3{
+  margin:0 0 8px 0;
+  font-size:20px;
+  color:var(--accent);
+}
+
+.entry-list{list-style:none;padding:0;margin:0;}
+.entry-list li{
+  padding:8px 6px;border-radius:6px;margin-bottom:6px;cursor:pointer;color:var(--muted);
+}
+.entry-list li:hover{background:rgba(107,79,59,0.06);color:var(--accent);}
+.entry-list li.active{background:rgba(107,79,59,0.08);color:var(--accent);font-weight:700}
+
+/* Main entry */
+.entry-wrap{
+  max-width:780px;margin:48px auto;padding:36px;box-sizing:border-box;
+}
+.entry{
+  background:var(--panel);
+  border-radius:14px;padding:28px 32px;box-shadow:0 8px 30px rgba(0,0,0,0.06);
+  max-height:calc(100vh - 120px);overflow:auto;
+  border:1px solid rgba(0,0,0,0.03);
+}
+.entry header h1{margin:0 0 8px 0;font-size:28px;}
+.entry-content{line-height:1.6;color:#3f2f22;font-size:18px}
+
+/* Navigation buttons */
+.nav-button{
+  position:fixed;bottom:26px;width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:18px;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(107,79,59,0.18);cursor:pointer;
+}
+.nav-button:active{transform:translateY(1px)}
+
+.nav-button.prev{left:26px}
+.nav-button.next{right:26px}
+
+/* Responsive tweaks */
+@media (max-width:720px){
+  .entry-wrap{padding:20px;margin:20px}
+  .entry{padding:20px}
+  .sidebar{width:230px}
+}

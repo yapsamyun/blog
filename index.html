@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Journal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="left-hover-area" id="leftHover">
+    <div class="sidebar" id="sidebar">
+      <h3>Entries</h3>
+      <ul id="entryList" class="entry-list"></ul>
+    </div>
+  </div>
+
+  <main class="entry-wrap">
+    <article class="entry" id="entry">
+      <header>
+        <h1 id="entryTitle">Loading…</h1>
+      </header>
+      <section id="entryContent" class="entry-content">
+      </section>
+    </article>
+  </main>
+
+  <button class="nav-button prev" id="prevBtn" aria-label="Previous entry">◀</button>
+  <button class="nav-button next" id="nextBtn" aria-label="Next entry">▶</button>
+
+  <script src="script.js"></script>
+</body>
+</html>
