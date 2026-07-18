@@ -27,3 +27,6 @@ private_keys/
 #   eval "$(ssh-agent -s)".pub
 eval "$(ssh-agent -s)"
 eval "$(ssh-agent -s)".pub
+
+# Private entries saved locally
+private_entries/
