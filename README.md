@@ -1,20 +1,12 @@
-# Simple Journal
+Updated to include a small build script that generates entries/index.json from the markdown filenames.
 
-This is a very small static journal site added to the repository. The site now stores each diary entry as a separate Markdown file inside the `entries/` directory. The frontend loads `entries/index.json` and fetches individual markdown files on demand.
+Usage:
 
-Files added/changed:
+- Run locally: npm run build-index
+  This will scan the `entries/` folder for files named `YYYY-MM-DD.md` and write `entries/index.json` sorted in chronological (oldest → newest) order.
 
-- index.html (unchanged)
-- styles.css (unchanged)
-- script.js (updated to load entries from entries/index.json)
-- entries/index.json (list of entries)
-- entries/2024-11-03.md
-- entries/2025-02-17.md
-- entries/2026-06-12.md
+- Each entry now has its own URL via the hash. Examples:
+  - /index.html#2026-06-12
+  - /#2026-06-12
 
-If you host via GitHub Pages or any HTTP server, the app will fetch the index and entry files correctly. If you open `index.html` via the file:// protocol, browsers may block fetch requests — run a local server to preview:
-
-  python3 -m http.server 8000
-
-License note for fonts
-- If you add the Gaegu TTF files into `fonts/`, include the SIL Open Font License text (OFL.txt) alongside them.
+- The previous button was adjusted so it sits above the left sidebar and is nudged right slightly to avoid accidental overlap. If you'd prefer the button to move behind the sidebar or be shifted more, I can adjust the CSS.

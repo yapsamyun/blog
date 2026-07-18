@@ -1,0 +1,11 @@
+{
+  "name": "journal-site",
+  "version": "1.0.0",
+  "description": "Simple static journal site",
+  "scripts": {
+    "build-index": "node scripts/generate_index.js"
+  },
+  "engines": {
+    "node": ">=12"
+  }
+}

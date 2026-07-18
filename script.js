@@ -51,9 +51,15 @@ function renderList(){
   entryList.innerHTML = '';
   entriesMeta.forEach((m,i)=>{
     const li = document.createElement('li');
-    li.textContent = m.date;
+    const a = document.createElement('a');
+    a.href = `#${encodeURIComponent(m.date)}`;
+    a.textContent = m.date;
+    a.addEventListener('click', (ev)=>{
+      ev.preventDefault();
+      goTo(i);
+    });
+    li.appendChild(a);
     li.tabIndex = 0;
-    li.addEventListener('click', ()=>{ goTo(i); });
     li.addEventListener('keydown', (ev)=>{ if(ev.key === 'Enter') goTo(i); });
     li.classList.toggle('active', i===idx);
     entryList.appendChild(li);
@@ -92,11 +98,26 @@ async function updateEntry(){
 function goTo(i){
   if(!entriesMeta.length) return;
   idx = ((i % entriesMeta.length) + entriesMeta.length) % entriesMeta.length;
+  // update URL hash so each entry has its own URL
+  const date = entriesMeta[idx].date;
+  try{
+    location.hash = encodeURIComponent(date);
+  }catch(e){/* ignore */}
   updateEntry();
 }
 
 nextBtn.addEventListener('click', ()=> goTo(idx+1));
 prevBtn.addEventListener('click', ()=> goTo(idx-1));
+
+window.addEventListener('hashchange', ()=>{
+  const h = decodeURIComponent(location.hash.slice(1) || '');
+  if(!h) return;
+  const found = entriesMeta.findIndex(m=> m.date === h);
+  if(found !== -1 && found !== idx) {
+    idx = found;
+    updateEntry();
+  }
+});
 
 window.addEventListener('keydown', (e) => {
   if(e.key === 'ArrowRight') goTo(idx+1);
@@ -116,5 +137,11 @@ window.addEventListener('keydown', (e) => {
     ];
   }
   renderList();
+  // if there's a hash, try to open that entry
+  const h = decodeURIComponent(location.hash.slice(1) || '');
+  if(h){
+    const found = entriesMeta.findIndex(m=> m.date === h);
+    if(found !== -1) idx = found;
+  }
   updateEntry();
 })();
