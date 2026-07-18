@@ -1,9 +1,11 @@
 // script.js - load entries from entries/index.json and fetch individual markdown files
 
 const indexPath = './entries/index.json';
+const frontPath = './front.md';
 let entriesMeta = [];
 const contentCache = {};
 let idx = 0;
+let showingFront = false;
 
 const entryTitle = document.getElementById('entryTitle');
 const entryContent = document.getElementById('entryContent');
@@ -41,6 +43,8 @@ function renderMarkdown(md){
     const trimmed = block.trim();
     const h1 = trimmed.match(/^#\s+(.+)$/);
     if(h1) return `<h2>${escapeHtml(h1[1])}</h2>`;
+    const h2 = trimmed.match(/^##\s+(.+)$/);
+    if(h2) return `<h3>${escapeHtml(h2[1])}</h3>`;
     // replace single newlines with <br>
     return `<p>${escapeHtml(trimmed).replace(/\n/g,'<br>')}</p>`;
   }).join('\n');
@@ -61,7 +65,7 @@ function renderList(){
     li.appendChild(a);
     li.tabIndex = 0;
     li.addEventListener('keydown', (ev)=>{ if(ev.key === 'Enter') goTo(i); });
-    li.classList.toggle('active', i===idx);
+    li.classList.toggle('active', i===idx && !showingFront);
     entryList.appendChild(li);
   });
 }
@@ -84,7 +88,21 @@ async function loadContentFor(i){
   return meta.content || '';
 }
 
+async function renderFront(md){
+  // For the front page we do NOT show the date header — user requested no date.
+  entryTitle.textContent = '';
+  // strip a leading H1 if present, but allow H2 as content (your front.md uses H2)
+  const mdWithoutH1 = md.replace(/^\s*#\s+(.+)(?:\r?\n)*/, '');
+  entryContent.innerHTML = renderMarkdown(mdWithoutH1);
+  showingFront = true;
+  Array.from(entryList.children).forEach((li,i)=> li.classList.toggle('active', false));
+}
+
 async function updateEntry(){
+  if(showingFront){
+    // front is already rendered separately
+    return;
+  }
   if(!entriesMeta.length) return;
   const e = entriesMeta[idx];
   const md = (await loadContentFor(idx)) || '';
@@ -109,6 +127,7 @@ async function updateEntry(){
 
 function goTo(i){
   if(!entriesMeta.length) return;
+  showingFront = false;
   idx = ((i % entriesMeta.length) + entriesMeta.length) % entriesMeta.length;
   // update URL hash so each entry has its own URL
   const date = entriesMeta[idx].date;
@@ -118,22 +137,56 @@ function goTo(i){
   updateEntry();
 }
 
-nextBtn.addEventListener('click', ()=> goTo(idx+1));
-prevBtn.addEventListener('click', ()=> goTo(idx-1));
+nextBtn.addEventListener('click', ()=>{
+  if(showingFront){
+    // go to first real entry
+    if(entriesMeta.length) goTo(0);
+  } else {
+    goTo(idx+1);
+  }
+});
+prevBtn.addEventListener('click', ()=>{
+  if(showingFront){
+    // wrap to last entry
+    if(entriesMeta.length) goTo(entriesMeta.length-1);
+  } else {
+    goTo(idx-1);
+  }
+});
 
-window.addEventListener('hashchange', ()=>{
+window.addEventListener('hashchange', async ()=>{
   const h = decodeURIComponent(location.hash.slice(1) || '');
-  if(!h) return;
+  if(!h){
+    // show front if available
+    try{
+      const md = await fetchText(frontPath);
+      await renderFront(md);
+      return;
+    }catch(e){
+      // no front available — fallback to first entry
+      showingFront = false;
+      if(entriesMeta.length) idx = 0;
+      updateEntry();
+      return;
+    }
+  }
   const found = entriesMeta.findIndex(m=> m.date === h);
-  if(found !== -1 && found !== idx) {
+  if(found !== -1) {
+    showingFront = false;
     idx = found;
     updateEntry();
   }
 });
 
 window.addEventListener('keydown', (e) => {
-  if(e.key === 'ArrowRight') goTo(idx+1);
-  if(e.key === 'ArrowLeft') goTo(idx-1);
+  if(e.key === 'ArrowRight'){
+    if(showingFront){ if(entriesMeta.length) goTo(0); }
+    else goTo(idx+1);
+  }
+  if(e.key === 'ArrowLeft'){
+    if(showingFront){ if(entriesMeta.length) goTo(entriesMeta.length-1); }
+    else goTo(idx-1);
+  }
 });
 
 // initialize: try to load index.json, fallback to embedded list if needed
@@ -153,7 +206,15 @@ window.addEventListener('keydown', (e) => {
   const h = decodeURIComponent(location.hash.slice(1) || '');
   if(h){
     const found = entriesMeta.findIndex(m=> m.date === h);
-    if(found !== -1) idx = found;
+    if(found !== -1) { idx = found; showingFront = false; updateEntry(); return; }
   }
-  updateEntry();
+  // No hash: try to render front.md if present; otherwise show first entry
+  try{
+    const md = await fetchText(frontPath);
+    await renderFront(md);
+  }catch(e){
+    showingFront = false;
+    if(entriesMeta.length) idx = 0;
+    updateEntry();
+  }
 })();
