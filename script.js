@@ -36,9 +36,16 @@ function escapeHtml(str){
 
 function renderMarkdown(md){
   if(!md) return '';
-  // Very small markdown renderer: headings (# ) and paragraphs
+  // Very small markdown renderer: headings (#, ##) and paragraphs, plus simple inline bold/italic
   // Split into blocks separated by blank lines
   const blocks = md.split(/\n{2,}/g);
+  function applyInline(s){
+    // after escaping, convert **strong** and *em* or _em_
+    // strong (non-greedy)
+    s = s.replace(/(\*\*|__)(.+?)\1/g, '<strong>$2</strong>');
+    s = s.replace(/(\*|_)(.+?)\1/g, '<em>$2</em>');
+    return s;
+  }
   const out = blocks.map(block => {
     const trimmed = block.trim();
     const h1 = trimmed.match(/^#\s+(.+)$/);
@@ -46,13 +53,26 @@ function renderMarkdown(md){
     const h2 = trimmed.match(/^##\s+(.+)$/);
     if(h2) return `<h3>${escapeHtml(h2[1])}</h3>`;
     // replace single newlines with <br>
-    return `<p>${escapeHtml(trimmed).replace(/\n/g,'<br>')}</p>`;
+    return `<p>${applyInline(escapeHtml(trimmed)).replace(/\n/g,'<br>')}</p>`;
   }).join('\n');
   return out;
 }
 
 function renderList(){
   entryList.innerHTML = '';
+
+  // Home / front link at top
+  const homeLi = document.createElement('li');
+  const homeA = document.createElement('a');
+  homeA.href = '#';
+  homeA.textContent = 'Home';
+  homeA.addEventListener('click', (ev)=>{ ev.preventDefault(); showFront(); });
+  homeLi.appendChild(homeA);
+  homeLi.tabIndex = 0;
+  homeLi.addEventListener('keydown', (ev)=>{ if(ev.key === 'Enter') showFront(); });
+  homeLi.classList.toggle('active', showingFront);
+  entryList.appendChild(homeLi);
+
   entriesMeta.forEach((m,i)=>{
     const li = document.createElement('li');
     const a = document.createElement('a');
@@ -95,7 +115,21 @@ async function renderFront(md){
   const mdWithoutH1 = md.replace(/^\s*#\s+(.+)(?:\r?\n)*/, '');
   entryContent.innerHTML = renderMarkdown(mdWithoutH1);
   showingFront = true;
-  Array.from(entryList.children).forEach((li,i)=> li.classList.toggle('active', false));
+  Array.from(entryList.children).forEach((li,i)=> li.classList.toggle('active', i===0 && showingFront));
+}
+
+async function showFront(){
+  try{
+    const md = await fetchText(frontPath);
+    await renderFront(md);
+    // clear the hash to represent the front page
+    try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
+    renderList();
+  }catch(e){
+    // no front available — fallback to first entry
+    showingFront = false;
+    if(entriesMeta.length) { idx = 0; location.hash = encodeURIComponent(entriesMeta[0].date); updateEntry(); }
+  }
 }
 
 async function updateEntry(){
@@ -120,7 +154,7 @@ async function updateEntry(){
     entryContent.innerHTML = renderMarkdown(md);
   }
 
-  Array.from(entryList.children).forEach((li,i)=> li.classList.toggle('active', i===idx));
+  Array.from(entryList.children).forEach((li,i)=> li.classList.toggle('active', i===idx+1 && !showingFront));
   const entryEl = document.querySelector('.entry');
   if(entryEl) entryEl.scrollTop = 0;
 }
@@ -135,6 +169,7 @@ function goTo(i){
     location.hash = encodeURIComponent(date);
   }catch(e){/* ignore */}
   updateEntry();
+  renderList();
 }
 
 nextBtn.addEventListener('click', ()=>{
@@ -161,6 +196,7 @@ window.addEventListener('hashchange', async ()=>{
     try{
       const md = await fetchText(frontPath);
       await renderFront(md);
+      renderList();
       return;
     }catch(e){
       // no front available — fallback to first entry
@@ -175,6 +211,7 @@ window.addEventListener('hashchange', async ()=>{
     showingFront = false;
     idx = found;
     updateEntry();
+    renderList();
   }
 });
 
