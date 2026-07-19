@@ -1,3 +1,1 @@
-## 心悦笔记本
-
-百年人生，今日唯一。
+## Hi. I'm Sam Yun & this is my journal ^^
